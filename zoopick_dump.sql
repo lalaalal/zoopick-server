@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict uYekADUGB6oe5LNYIggNQQcxqTfZa3KFaOaRnHvisBwXpiQqQLxHK3yMYpJPRFH
+\restrict hrrnEF8XRbhHz0qwZU3BxClbCd3RBTK3ECiUV2gVArs6wXqa7OdEOdgjc9jFHHw
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -1478,6 +1478,14 @@ ALTER TABLE ONLY zoopick.timetables
 
 
 --
+-- Name: users uq_user_email; Type: CONSTRAINT; Schema: zoopick; Owner: postgres
+--
+
+ALTER TABLE ONLY zoopick.users
+    ADD CONSTRAINT uq_user_email UNIQUE (school_email);
+
+
+--
 -- Name: users uq_users_nickname; Type: CONSTRAINT; Schema: zoopick; Owner: postgres
 --
 
@@ -1859,5 +1867,5 @@ ALTER TABLE ONLY zoopick.cctv_videos
 -- PostgreSQL database dump complete
 --
 
-\unrestrict uYekADUGB6oe5LNYIggNQQcxqTfZa3KFaOaRnHvisBwXpiQqQLxHK3yMYpJPRFH
+\unrestrict hrrnEF8XRbhHz0qwZU3BxClbCd3RBTK3ECiUV2gVArs6wXqa7OdEOdgjc9jFHHw
 
