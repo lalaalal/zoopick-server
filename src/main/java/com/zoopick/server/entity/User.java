@@ -48,4 +48,10 @@ public class User {
     public Collection<GrantedAuthority> getAuthorities() {
         return role.getGrantedAuthority();
     }
+
+
+    public void updateProfile(String nickname, String department) {
+        this.nickname = nickname;
+        this.department = department;
+    }
 }

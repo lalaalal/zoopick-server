@@ -25,4 +25,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     default Optional<ChatRoom> findByParticipantIdAndItemIdIs(long userId, long itemId) {
         return findByOwnerIdOrFinderIdAndItemIdIs(userId, userId, itemId);
     }
+
+    long countByOwnerIdOrFinderId(Long ownerId, Long finderId);
 }
