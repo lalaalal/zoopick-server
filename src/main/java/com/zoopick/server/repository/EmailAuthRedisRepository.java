@@ -18,10 +18,10 @@ public class EmailAuthRedisRepository {
 
     private final RedisTemplate<String, EmailAuth> emailAuthRedisTemplate;
 
-    public EmailAuth getOrThrow(String email, String clientErrorMessage, String exceptionMessage) {
+    public EmailAuth getOrThrow(String email) {
         EmailAuth emailAuth = emailAuthRedisTemplate.opsForValue().get(emailAuthKey(email));
         if (emailAuth == null)
-            throw new BadRequestException(clientErrorMessage, exceptionMessage);
+            throw new BadRequestException("인증 요청 기록이 없습니다.", email + " did not request certification yet.");
         return emailAuth;
     }
 

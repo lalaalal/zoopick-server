@@ -9,8 +9,7 @@ import com.zoopick.server.exception.BadRequestException;
 import com.zoopick.server.exception.DataNotFoundException;
 import com.zoopick.server.repository.EmailAuthRedisRepository;
 import com.zoopick.server.repository.UserRepository;
-import com.zoopick.server.util.EmailProvider;
-import com.zoopick.server.util.JwtUtil;
+import com.zoopick.server.security.JwtUtil;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
@@ -32,7 +31,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final EmailAuthRedisRepository emailAuthRedisRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailProvider emailProvider;
+    private final EmailService emailService;
     private final JwtUtil jwtUtil;
     private final TokenValidationService tokenValidationService;
 
@@ -41,11 +40,7 @@ public class AuthService {
     }
 
     public SignupResult signup(SignupRequest request) {
-        EmailAuth emailAuth = emailAuthRedisRepository.getOrThrow(
-                request.getSchoolEmail(),
-                "이메일 인증을 진행해주세요.",
-                request.getSchoolEmail() + " is not certificated."
-        );
+        EmailAuth emailAuth = emailAuthRedisRepository.getOrThrow(request.getSchoolEmail());
         if (!emailAuth.isVerified())
             throw new BadRequestException("이메일 인증이 완료되지 않았습니다.", request.getSchoolEmail() + " is not verified.");
         if (emailAuth.isSignupExpired()) {
@@ -59,7 +54,7 @@ public class AuthService {
                 .schoolEmail(request.getSchoolEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .nickname(request.getNickname())
-                .role(Role.ROLE_STUDENT)
+                .role(Role.STUDENT)
                 .department(request.getDepartment())
                 .grade(request.getGrade())
                 .build();
@@ -125,16 +120,12 @@ public class AuthService {
         EmailAuth emailAuth = new EmailAuth(email, certificationNumber, createNewExpireTime(), false);
         emailAuthRedisRepository.save(emailAuth);
 
-        emailProvider.senderCertificationMail(email, certificationNumber);
+        emailService.senderCertificationMail(email, certificationNumber);
     }
 
     @Transactional
     public void verifyCertificationCode(CheckCertificationRequest request) {
-        EmailAuth emailAuth = emailAuthRedisRepository.getOrThrow(
-                request.getEmail(),
-                "인증 요청 기록이 없습니다.",
-                request.getEmail() + " did not request certification yet."
-        );
+        EmailAuth emailAuth = emailAuthRedisRepository.getOrThrow(request.getEmail());
 
         if (!emailAuth.getCertificationCode().equals(request.getCertificationNumber())) {
             throw new BadRequestException(
