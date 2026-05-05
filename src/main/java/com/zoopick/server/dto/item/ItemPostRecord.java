@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 @Builder
 public class ItemPostRecord {
     private long id;
+    private String title;
+    private String description;
     private ItemType type;
     private ItemStatus status;
     private ItemCategory category;
