@@ -41,11 +41,7 @@ public class AuthService {
     }
 
     public SignupResult signup(SignupRequest request) {
-        EmailAuth emailAuth = emailAuthRedisRepository.getOrThrow(
-                request.getSchoolEmail(),
-                "이메일 인증을 진행해주세요.",
-                request.getSchoolEmail() + " is not certificated."
-        );
+        EmailAuth emailAuth = emailAuthRedisRepository.getOrThrow(request.getSchoolEmail());
         if (!emailAuth.isVerified())
             throw new BadRequestException("이메일 인증이 완료되지 않았습니다.", request.getSchoolEmail() + " is not verified.");
         if (emailAuth.isSignupExpired()) {
@@ -59,7 +55,7 @@ public class AuthService {
                 .schoolEmail(request.getSchoolEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .nickname(request.getNickname())
-                .role(Role.ROLE_STUDENT)
+                .role(Role.STUDENT)
                 .department(request.getDepartment())
                 .grade(request.getGrade())
                 .build();
@@ -130,11 +126,7 @@ public class AuthService {
 
     @Transactional
     public void verifyCertificationCode(CheckCertificationRequest request) {
-        EmailAuth emailAuth = emailAuthRedisRepository.getOrThrow(
-                request.getEmail(),
-                "인증 요청 기록이 없습니다.",
-                request.getEmail() + " did not request certification yet."
-        );
+        EmailAuth emailAuth = emailAuthRedisRepository.getOrThrow(request.getEmail());
 
         if (!emailAuth.getCertificationCode().equals(request.getCertificationNumber())) {
             throw new BadRequestException(

@@ -6,9 +6,8 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.List;
+import java.util.Collection;
 
 @Entity
 @Table(name = "users", schema = "zoopick")
@@ -46,7 +45,7 @@ public class User {
     @Column(length = 20, nullable = false)
     private String grade;
 
-    public List<GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+    public Collection<GrantedAuthority> getAuthorities() {
+        return role.getGrantedAuthority();
     }
 }
