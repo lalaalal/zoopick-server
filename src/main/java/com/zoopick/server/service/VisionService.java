@@ -11,6 +11,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.client.RestClient;
 
 @Service
@@ -20,7 +22,13 @@ public class VisionService {
     private final FastApiProperties fastApiProperties;
     private final ItemRepository itemRepository;
 
+    //db에 commit한 이벤트를 받으면 실행
     @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleItemCreated(Long itemId) {
+        analyzeImage(itemId);
+    }
+
     public void analyzeImage(Long itemId) {
         Item item = itemRepository.findById(itemId).orElseThrow(() -> new EntityNotFoundException("아이템을 찾을 수 없습니다."));
         VisionAnalyzeRequest request = new VisionAnalyzeRequest(item.getImageUrl());

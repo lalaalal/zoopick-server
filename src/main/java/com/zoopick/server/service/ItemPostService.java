@@ -10,9 +10,11 @@ import com.zoopick.server.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,8 +28,9 @@ public class ItemPostService {
     private final ItemPostRepository itemPostRepository;
     private final BuildingRepository buildingRepository;
     private final ItemPostMapper itemPostMapper;
-    private final VisionService visionService;
+    private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
     public CreateItemPostResult createItemPost(long userId, CreateItemPostRequest request) {
         User user = userRepository.findByIdOrThrow(userId);
         Building building = buildingRepository.findByIdOrThrow(request.getBuildingId());
@@ -45,7 +48,7 @@ public class ItemPostService {
                 .build();
 
         Item savedItem = itemRepository.save(item);
-        visionService.analyzeImage(item.getId());
+        eventPublisher.publishEvent(savedItem.getId());
 
         ItemPost itemPost = ItemPost.builder()
                 .title(request.getTitle())
