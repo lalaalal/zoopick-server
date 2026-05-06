@@ -17,10 +17,6 @@ import java.time.LocalDateTime;
 public class CreateItemPostRequest {
     @NotBlank
     private ItemType type;
-    @NotBlank
-    private ItemCategory category;
-    @NotBlank
-    private ItemColor color;
     private String title;
     private String description;
     @JsonProperty("image_url")

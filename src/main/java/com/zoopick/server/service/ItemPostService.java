@@ -10,9 +10,11 @@ import com.zoopick.server.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,7 +28,9 @@ public class ItemPostService {
     private final ItemPostRepository itemPostRepository;
     private final BuildingRepository buildingRepository;
     private final ItemPostMapper itemPostMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
     public CreateItemPostResult createItemPost(long userId, CreateItemPostRequest request) {
         User user = userRepository.findByIdOrThrow(userId);
         Building building = buildingRepository.findByIdOrThrow(request.getBuildingId());
@@ -34,8 +38,9 @@ public class ItemPostService {
                 .reporter(user)
                 .type(request.getType())
                 .status(ItemStatus.REPORTED)
-                .category(request.getCategory())
-                .color(request.getColor())
+                .category(null)
+                .color(null)
+                .embedding(null)
                 .reportedBuilding(building)
                 .locationName(request.getDetailAddress())
                 .imageUrl(request.getImageUrl())
@@ -43,6 +48,7 @@ public class ItemPostService {
                 .build();
 
         Item savedItem = itemRepository.save(item);
+        eventPublisher.publishEvent(savedItem.getId());
 
         ItemPost itemPost = ItemPost.builder()
                 .title(request.getTitle())
@@ -51,7 +57,6 @@ public class ItemPostService {
                 .item(savedItem)
                 .build();
         ItemPost savedItemPost = itemPostRepository.save(itemPost);
-
         return new CreateItemPostResult(savedItemPost.getId(), savedItem.getStatus(), "등록되었습니다.");
     }
 
