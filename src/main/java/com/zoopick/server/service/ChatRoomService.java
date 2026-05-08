@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -91,7 +90,7 @@ public class ChatRoomService {
         return new FindChatRoomResult(chatRoomId.isPresent(), chatRoomId.orElse(0L));
     }
 
-    private void validateParticipant(ChatRoom chatRoom, User user) {
+    private void verifyParticipant(ChatRoom chatRoom, User user) {
         User owner = chatRoom.getOwner();
         User finder = chatRoom.getFinder();
         if (!(owner.getId().equals(user.getId()) || finder.getId().equals(user.getId())))
@@ -109,7 +108,7 @@ public class ChatRoomService {
     public ChatRoomRecord getChatRoom(long userId, long chatRoomId) {
         User user = userRepository.findByIdOrThrow(userId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
-        validateParticipant(chatRoom, user);
+        verifyParticipant(chatRoom, user);
 
         return chatRoomMapper.toChatRoomRecord(chatRoom);
     }
@@ -117,7 +116,7 @@ public class ChatRoomService {
     public ListMessagesResult getMessages(long userId, long chatRoomId, @Nullable MessageFilter filter) {
         User user = userRepository.findByIdOrThrow(userId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
-        validateParticipant(chatRoom, user);
+        verifyParticipant(chatRoom, user);
 
         List<ChatMessage> messages = chatMessageRepository.findAll(ChatMessageRepository.applyFilter(filter));
         List<MessageRecord> messageRecords = messages.stream()
@@ -130,7 +129,7 @@ public class ChatRoomService {
     public void sendMessage(long senderId, long chatRoomId, String message) throws FirebaseMessagingException {
         User sender = userRepository.findByIdOrThrow(senderId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
-        validateParticipant(chatRoom, sender);
+        verifyParticipant(chatRoom, sender);
 
         User receiver = resolveReceiver(chatRoom, sender);
         ChatMessage chatMessage = ChatMessage.builder()
@@ -155,9 +154,12 @@ public class ChatRoomService {
         return finder;
     }
 
-    public void closeChatRoom(long userId, long chatRoomId, ChatRoomCloseReason reason) {
+    public void closeChatRoom(long userId, long chatRoomId, ChatRoomCloseReason reason) throws FirebaseMessagingException {
+        User sender = userRepository.findByIdOrThrow(userId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
-        verifyUserInChatRoom(chatRoom, userId);
+        verifyParticipant(chatRoom, sender);
+
+        User receiver = resolveReceiver(chatRoom, sender);
         if (chatRoom.getStatus() != ChatRoomStatus.OPEN)
             throw new BadRequestException("이미 닫힌 채팅방입니다.", chatRoomId + " is already closed.");
 
@@ -165,12 +167,22 @@ public class ChatRoomService {
         chatRoom.setResolvedAt(LocalDateTime.now());
         chatRoomRepository.save(chatRoom);
 
-        // TODO : send notification to counterpart
+        SendNotificationCommand command = new SendNotificationCommand(
+                "Zoopick",
+                "채팅방이 닫혔습니다.",
+                ChatMessagePayload.of(
+                        chatRoom, sender, "채팅방이 닫혔습니다."
+                )
+        );
+        notificationService.send(receiver, command);
     }
 
-    public void reopenChatRoom(long userId, long chatRoomId) {
+    public void reopenChatRoom(long userId, long chatRoomId) throws FirebaseMessagingException {
+        User sender = userRepository.findByIdOrThrow(userId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
-        verifyUserInChatRoom(chatRoom, userId);
+        verifyParticipant(chatRoom, sender);
+
+        User receiver = resolveReceiver(chatRoom, sender);
         if (chatRoom.getStatus() == ChatRoomStatus.OPEN)
             throw new BadRequestException("이미 열린 채팅방입니다.", chatRoomId + " is already opened.");
 
@@ -178,11 +190,13 @@ public class ChatRoomService {
         chatRoom.setResolvedAt(null);
         chatRoomRepository.save(chatRoom);
 
-        // TODO : send notification to counterpart
-    }
-
-    private void verifyUserInChatRoom(ChatRoom chatRoom, long userId) {
-        if (!Objects.equals(chatRoom.getOwner().getId(), userId) && !Objects.equals(chatRoom.getFinder().getId(), userId))
-            throw new BadRequestException("사용자가 포함되지 않은 채팅방입니다.", userId + " is not in chat room " + chatRoom.getId());
+        SendNotificationCommand command = new SendNotificationCommand(
+                "Zoopick",
+                "채팅방이 열렸습니다.",
+                ChatMessagePayload.of(
+                        chatRoom, sender, "채팅방이 열렸습니다."
+                )
+        );
+        notificationService.send(receiver, command);
     }
 }

@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -50,6 +49,9 @@ public class NotificationService {
         if (fcmToken == null)
             throw DataNotFoundException.from("FCM 토큰", user.getSchoolEmail());
 
+        ZoopickNotification zoopickNotification = notificationMapper.toZoopickNotification(user, command);
+        ZoopickNotification savedNotification = notificationRepository.save(zoopickNotification);
+
         Notification notification = Notification.builder()
                 .setTitle(command.title())
                 .setBody(command.body())
@@ -57,11 +59,10 @@ public class NotificationService {
         Message message = Message.builder()
                 .setNotification(notification)
                 .putAllData(command.payload().toMap())
+                .putData("type", command.payload().type().name())
+                .putData("id", String.valueOf(savedNotification.getId()))
                 .setToken(fcmToken)
                 .build();
-
-        ZoopickNotification zoopickNotification = notificationMapper.toZoopickNotification(user, command);
-        notificationRepository.save(zoopickNotification);
         return FirebaseMessaging.getInstance().send(message);
     }
 
@@ -75,15 +76,16 @@ public class NotificationService {
         List<ZoopickNotification> zoopickNotifications = users.stream()
                 .map(user -> notificationMapper.toZoopickNotification(user, command))
                 .toList();
-        notificationRepository.saveAll(zoopickNotifications);
+        List<ZoopickNotification> savedNotifications = notificationRepository.saveAll(zoopickNotifications);
 
-        List<Message> messages = users.stream()
-                .map(User::getFcmToken)
-                .filter(Objects::nonNull)
-                .map(fcmToken -> Message.builder()
+        List<Message> messages = savedNotifications.stream()
+                .filter(zoopickNotification -> zoopickNotification.getUser().getFcmToken() != null)
+                .map(zoopickNotification -> Message.builder()
                         .setNotification(notification)
                         .putAllData(command.payload().toMap())
-                        .setToken(fcmToken)
+                        .putData("type", command.payload().type().name())
+                        .putData("id", String.valueOf(zoopickNotification.getId()))
+                        .setToken(zoopickNotification.getUser().getFcmToken())
                         .build())
                 .toList();
 

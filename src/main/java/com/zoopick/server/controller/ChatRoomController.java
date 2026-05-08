@@ -125,23 +125,39 @@ public class ChatRoomController {
         return ResponseEntity.ok(CommonResponse.success("done"));
     }
 
+    @Operation(summary = "채팅방 종료", description = "채팅방을 종료 상태로 변경합니다. 종료 사유를 함께 전달합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "채팅방 종료 성공"),
+            @ApiResponse(responseCode = "400", description = "채팅방 참여자가 아니거나 잘못된 요청값"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "404", description = "채팅방을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "알림 전송 실패")
+    })
     @PatchMapping("/{roomId}/close")
     public ResponseEntity<CommonResponse<String>> closeChatRoom(
             @AuthenticationPrincipal UserPrincipal principal,
-            @Parameter(description = "메시지를 전송할 채팅방 ID", example = "1")
+            @Parameter(description = "종료할 채팅방 ID", example = "1")
             @PathVariable long roomId,
             @RequestBody @Valid CloseChatRoomRequest closeChatRoomRequest
-    ) {
+    ) throws FirebaseMessagingException {
         chatRoomService.closeChatRoom(principal.id(), roomId, closeChatRoomRequest.getReason());
         return ResponseEntity.ok(CommonResponse.success("성공"));
     }
 
+    @Operation(summary = "채팅방 재개", description = "종료된 채팅방을 다시 활성 상태로 변경합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "채팅방 재개 성공"),
+            @ApiResponse(responseCode = "400", description = "채팅방 참여자가 아니거나 재개할 수 없는 상태"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "404", description = "채팅방을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "알림 전송 실패")
+    })
     @PatchMapping("/{roomId}/reopen")
     public ResponseEntity<CommonResponse<String>> reopenChatRoom(
             @AuthenticationPrincipal UserPrincipal principal,
-            @Parameter(description = "메시지를 전송할 채팅방 ID", example = "1")
+            @Parameter(description = "재개할 채팅방 ID", example = "1")
             @PathVariable long roomId
-    ) {
+    ) throws FirebaseMessagingException {
         chatRoomService.reopenChatRoom(principal.id(), roomId);
         return ResponseEntity.ok(CommonResponse.success("성공"));
     }
