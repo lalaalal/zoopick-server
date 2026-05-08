@@ -135,6 +135,8 @@ public class ChatRoomService {
         User sender = userRepository.findByIdOrThrow(senderId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
         verifyParticipant(chatRoom, sender);
+        if (chatRoom.getStatus() != ChatRoomStatus.OPEN)
+            throw new BadRequestException("이미 종료된 채팅방입니다.", chatRoomId + " is closed");
 
         User receiver = resolveReceiver(chatRoom, sender);
         ChatMessage chatMessage = ChatMessage.builder()
