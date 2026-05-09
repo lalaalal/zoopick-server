@@ -1,4 +1,4 @@
-package com.zoopick.server.service;
+package com.zoopick.server.service.notification;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
@@ -11,10 +11,9 @@ import com.zoopick.server.entity.ZoopickNotification;
 import com.zoopick.server.exception.AccessTokenException;
 import com.zoopick.server.exception.BadRequestException;
 import com.zoopick.server.exception.DataNotFoundException;
-import com.zoopick.server.mapper.NotificationMapper;
+import com.zoopick.server.mapper.notification.NotificationMapper;
 import com.zoopick.server.repository.NotificationRepository;
 import com.zoopick.server.repository.UserRepository;
-import com.zoopick.server.service.command.SendNotificationCommand;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Service;

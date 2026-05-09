@@ -1,12 +1,12 @@
-package com.zoopick.server.mapper;
+package com.zoopick.server.mapper.notification;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zoopick.server.dto.notification.SendNotificationRequest;
 import com.zoopick.server.entity.NotificationType;
+import com.zoopick.server.exception.BadRequestException;
 import com.zoopick.server.exception.InternalServerException;
-import com.zoopick.server.service.command.ChatMessagePayload;
-import com.zoopick.server.service.command.NotificationPayload;
-import com.zoopick.server.service.command.SendNotificationCommand;
+import com.zoopick.server.service.notification.SendNotificationCommand;
+import com.zoopick.server.service.notification.payload.*;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Component;
@@ -18,11 +18,23 @@ import java.util.Map;
 @NullMarked
 public class SendNotificationRequestMapper {
     private final Map<NotificationType, Class<? extends NotificationPayload>> payloadTypes = Map.of(
-            NotificationType.CHAT_MESSAGE, ChatMessagePayload.class
+            NotificationType.CHAT_MESSAGE, ChatMessagePayload.class,
+            NotificationType.ITEM_RETURNED, ItemReturnedPayload.class,
+            NotificationType.LOCKER_READY, LockerReadyPayload.class,
+            NotificationType.THEFT_SUSPECTED, TheftSuspectedPayload.class,
+            NotificationType.MATCH_FOUND, MatchFoundPayload.class
     );
 
     private final ObjectMapper objectMapper;
 
+    /**
+     * {@linkplain SendNotificationRequest}를 {@linkplain SendNotificationCommand}로 변환합니다.
+     *
+     * @param request {@link SendNotificationRequest}
+     * @return {@link SendNotificationCommand}
+     * @throws BadRequestException     payload의 형식이 잘못되었을 때
+     * @throws InternalServerException 지원하지 않는 알림 형식이거나 서버 장애가 발생했을 때
+     */
     public SendNotificationCommand toCommand(SendNotificationRequest request) {
         try {
             NotificationType type = request.getType();
@@ -31,6 +43,8 @@ public class SendNotificationRequestMapper {
             Class<? extends NotificationPayload> payloadType = payloadTypes.get(type);
             NotificationPayload payload = objectMapper.convertValue(request.getPayload(), payloadType);
             return new SendNotificationCommand(request.getTitle(), request.getBody(), payload);
+        } catch (IllegalArgumentException exception) {
+            throw new BadRequestException("잘못된 요청입니다.", request.getPayload() + " is not readable");
         } catch (RuntimeException exception) {
             throw new InternalServerException("Failed to convert payload " + request.getPayload(), exception);
         }

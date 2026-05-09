@@ -10,8 +10,9 @@ import com.zoopick.server.repository.ChatMessageRepository;
 import com.zoopick.server.repository.ChatRoomRepository;
 import com.zoopick.server.repository.ItemRepository;
 import com.zoopick.server.repository.UserRepository;
-import com.zoopick.server.service.command.ChatMessagePayload;
-import com.zoopick.server.service.command.SendNotificationCommand;
+import com.zoopick.server.service.notification.NotificationService;
+import com.zoopick.server.service.notification.SendNotificationCommand;
+import com.zoopick.server.service.notification.payload.ChatMessagePayload;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -34,6 +36,9 @@ public class ChatRoomService {
     private final ChatRoomMapper chatRoomMapper;
 
     public CreateChatRoomResult createChatRoom(long requesterId, CreateChatRoomRequest createChatRoomRequest) {
+        if (Objects.equals(requesterId, createChatRoomRequest.getCounterpartId()))
+            throw new BadRequestException("잘못된 요청입니다.", "Requester and counterpart is same : " + requesterId);
+
         long itemId = createChatRoomRequest.getItemId();
         Item item = itemRepository.findByIdOrThrow(itemId);
         User requester = userRepository.findByIdOrThrow(requesterId);
