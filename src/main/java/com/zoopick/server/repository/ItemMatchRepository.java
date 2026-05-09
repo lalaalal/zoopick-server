@@ -4,6 +4,7 @@ import com.zoopick.server.dto.match.ItemMatchProjection;
 import com.zoopick.server.dto.match.SimilarItemProjection;
 import com.zoopick.server.entity.Item;
 import com.zoopick.server.entity.ItemMatch;
+import com.zoopick.server.entity.MatchStatus;
 import com.zoopick.server.exception.DataNotFoundException;
 import org.springframework.data.domain.Vector;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -84,4 +85,8 @@ public interface ItemMatchRepository extends JpaRepository<ItemMatch, Long> {
     int rejectOthersByLostItem(@Param("matchId") Long matchId,
                                 @Param("lostItemId") Long lostItemId,
                                 @Param("foundItemId") Long foundItemId);
+
+    // CONFIRMED된 매칭이 있는지 확인
+    boolean existsByLostItemAndStatus(Item lostItem, MatchStatus status);
+    boolean existsByFoundItemAndStatus(Item foundItem, MatchStatus status);
 }
