@@ -1,9 +1,10 @@
-package com.zoopick.server.service.command;
+package com.zoopick.server.service.notification.payload;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.zoopick.server.dto.notification.SendNotificationRequest;
 import com.zoopick.server.entity.NotificationType;
-import com.zoopick.server.mapper.SendNotificationRequestMapper;
+import com.zoopick.server.mapper.notification.SendNotificationRequestMapper;
+import com.zoopick.server.service.notification.SendNotificationCommand;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Map;

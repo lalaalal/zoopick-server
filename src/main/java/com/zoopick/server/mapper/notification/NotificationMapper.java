@@ -1,11 +1,11 @@
-package com.zoopick.server.mapper;
+package com.zoopick.server.mapper.notification;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zoopick.server.dto.notification.NotificationRecord;
 import com.zoopick.server.entity.User;
 import com.zoopick.server.entity.ZoopickNotification;
-import com.zoopick.server.service.command.SendNotificationCommand;
+import com.zoopick.server.service.notification.SendNotificationCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

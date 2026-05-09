@@ -1,8 +1,8 @@
-package com.zoopick.server.service.command;
+package com.zoopick.server.service.notification;
 
 import com.zoopick.server.dto.notification.SendNotificationRequest;
-import com.zoopick.server.mapper.SendNotificationRequestMapper;
-import com.zoopick.server.service.NotificationService;
+import com.zoopick.server.mapper.notification.SendNotificationRequestMapper;
+import com.zoopick.server.service.notification.payload.NotificationPayload;
 import org.jspecify.annotations.NullMarked;
 
 /**

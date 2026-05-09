@@ -1,4 +1,4 @@
-package com.zoopick.server.service.command;
+package com.zoopick.server.service.notification.payload;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.zoopick.server.entity.Item;
@@ -10,17 +10,17 @@ import java.util.Map;
 
 @AllArgsConstructor
 @NullMarked
-public class TheftSuspectedPayload implements NotificationPayload {
+public class LockerReadyPayload implements NotificationPayload {
     @JsonProperty("item_id")
     private final long itemId;
 
-    public static TheftSuspectedPayload of(Item item) {
-        return new TheftSuspectedPayload(item.getId());
+    public static LockerReadyPayload of(Item item) {
+        return new LockerReadyPayload(item.getId());
     }
 
     @Override
     public NotificationType type() {
-        return NotificationType.THEFT_SUSPECTED;
+        return NotificationType.LOCKER_READY;
     }
 
     @Override

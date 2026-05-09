@@ -1,4 +1,4 @@
-package com.zoopick.server.service.command;
+package com.zoopick.server.service.notification.payload;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.zoopick.server.entity.ChatRoom;
