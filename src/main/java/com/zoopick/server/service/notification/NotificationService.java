@@ -1,5 +1,7 @@
 package com.zoopick.server.service.notification;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
@@ -14,6 +16,7 @@ import com.zoopick.server.exception.DataNotFoundException;
 import com.zoopick.server.mapper.notification.NotificationMapper;
 import com.zoopick.server.repository.NotificationRepository;
 import com.zoopick.server.repository.UserRepository;
+import com.zoopick.server.service.notification.payload.NotificationPayload;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Service;
@@ -31,6 +34,7 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
+    private final ObjectMapper objectMapper;
 
     public void register(long userId, String fcmToken) throws AccessTokenException, DataNotFoundException {
         User user = userRepository.findByIdOrThrow(userId);
@@ -89,6 +93,28 @@ public class NotificationService {
                 .toList();
 
         return FirebaseMessaging.getInstance().sendEach(messages).toString();
+    }
+
+    public void storeNotification(long userId, NotificationPayload payload) {
+        User user = userRepository.findByIdOrThrow(userId);
+        ZoopickNotification zoopickNotification = ZoopickNotification.builder()
+                .user(user)
+                .type(payload.type())
+                .payload(objectMapper.convertValue(payload, JsonNode.class))
+                .build();
+        notificationRepository.save(zoopickNotification);
+    }
+
+    public void storeNotifications(List<Long> userIds, NotificationPayload payload) {
+        JsonNode convertedPayload = objectMapper.convertValue(payload, JsonNode.class);
+        List<ZoopickNotification> zoopickNotifications = userRepository.findAllById(userIds).stream()
+                .map(user -> ZoopickNotification.builder()
+                        .user(user)
+                        .type(payload.type())
+                        .payload(convertedPayload)
+                        .build())
+                .toList();
+        notificationRepository.saveAll(zoopickNotifications);
     }
 
     public List<NotificationRecord> getNotifications(long userId) {

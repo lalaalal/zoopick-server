@@ -123,6 +123,11 @@ public class ChatRoomService {
         return chatRoomMapper.toChatRoomRecord(chatRoom);
     }
 
+    public List<Long> getParticipants(long chatRoomId) {
+        ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
+        return List.of(chatRoom.getOwner().getId(), chatRoom.getFinder().getId());
+    }
+
     public ListMessagesResult getMessages(long userId, long chatRoomId, @Nullable MessageFilter filter) {
         User user = userRepository.findByIdOrThrow(userId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
@@ -136,7 +141,7 @@ public class ChatRoomService {
         return new ListMessagesResult(chatRoomRecord, messageRecords);
     }
 
-    public void sendMessage(long senderId, long chatRoomId, String message) throws FirebaseMessagingException {
+    private MessageContext sendMessage(long senderId, long chatRoomId, String message) {
         User sender = userRepository.findByIdOrThrow(senderId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
         verifyParticipant(chatRoom, sender);
@@ -150,12 +155,24 @@ public class ChatRoomService {
                 .content(message)
                 .build();
         chatMessageRepository.save(chatMessage);
+        return new MessageContext(sender, receiver, chatRoom);
+    }
+
+    public void sendMessageWithNotification(long senderId, long chatRoomId, String message) throws FirebaseMessagingException {
+        MessageContext context = sendMessage(senderId, chatRoomId, message);
         SendNotificationCommand command = new SendNotificationCommand(
-                sender.getNickname(),
+                context.sender().getNickname(),
                 message,
-                ChatMessagePayload.of(chatRoom, sender, message)
+                ChatMessagePayload.of(context.chatRoom(), context.sender(), message)
         );
-        notificationService.send(receiver, command);
+        notificationService.send(context.receiver(), command);
+    }
+
+    public void sendMessageWithoutNotification(long senderId, long chatRoomId, String message) {
+        MessageContext context = sendMessage(senderId, chatRoomId, message);
+        notificationService.storeNotification(context.receiver().getId(), ChatMessagePayload.of(
+                context.chatRoom(), context.sender(), message)
+        );
     }
 
     private User resolveReceiver(ChatRoom chatRoom, User sender) {
@@ -210,5 +227,9 @@ public class ChatRoomService {
                 )
         );
         notificationService.send(receiver, command);
+    }
+
+    private record MessageContext(User sender, User receiver, ChatRoom chatRoom) {
+
     }
 }
