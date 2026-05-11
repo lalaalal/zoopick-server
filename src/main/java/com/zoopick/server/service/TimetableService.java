@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -114,9 +115,12 @@ public class TimetableService {
         Map<Long, List<CourseSchedule>> scheduleMap = courseScheduleRepository.findAllByCourseIdIn(courseIds).stream()
                 .collect(Collectors.groupingBy(s -> s.getCourse().getId()));
 
+        Map<Long, Course> courseMap = courseRepository.findAllById(courseIds).stream()
+                .collect(Collectors.toMap(Course::getId, c -> c));
+
         List<Timetable> newTimetables = new ArrayList<>();
         for (var req : request.courses()) {
-            Course course = courseRepository.findById(req.courseId())
+            Course course = Optional.ofNullable(courseMap.get(req.courseId()))
                     .orElseThrow(() -> DataNotFoundException.from("강의", req.courseId()));
 
             // 시간 중복 체크
