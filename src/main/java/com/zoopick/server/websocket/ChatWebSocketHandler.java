@@ -27,7 +27,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        ChatSocketMessage chatSocketMessage = objectMapper.convertValue(message.getPayload(), ChatSocketMessage.class);
+        ChatSocketMessage chatSocketMessage = objectMapper.readValue(message.getPayload(), ChatSocketMessage.class);
         long userId = WebSocketSessionUtils.getUserId(session);
         if (!chatRoomService.getParticipants(chatSocketMessage.roomId()).contains(userId)) {
             session.close(CloseStatus.NOT_ACCEPTABLE.withReason("Not permitted to access room"));
