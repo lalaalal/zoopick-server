@@ -43,9 +43,9 @@ public class TimetableService {
 
     public TimetableGroupResponse getPrimaryTimetableGroup(String email) {
         User user = userRepository.findBySchoolEmailOrThrow(email);
-        TimetableGroup group = groupRepository.findByUserAndIsPrimaryTrue(user)
-                .orElseThrow(() -> new DataNotFoundException("기본 시간표가 설정되지 않았습니다.", "PRIMARY_TIMETABLE_NOT_FOUND"));
-        return new TimetableGroupResponse(group.getId(), group.getName(), group.getYear(), group.getSemester(), group.getIsPrimary());
+        return groupRepository.findByUserAndIsPrimaryTrue(user)
+                .map(g -> new TimetableGroupResponse(g.getId(), g.getName(), g.getYear(), g.getSemester(), g.getIsPrimary()))
+                .orElse(null);
     }
 
     @Transactional
@@ -53,7 +53,7 @@ public class TimetableService {
         User user = userRepository.findBySchoolEmailOrThrow(email);
 
         // 해당 학기의 첫 시간표라면 기본(primary)으로 설정
-        boolean isFirst = groupRepository.findAllByUserAndYearAndSemester(user, request.year(), request.semester()).isEmpty();
+        boolean isFirst = groupRepository.findAllByUserOrderByYearDescSemesterDesc(user).isEmpty();
 
         TimetableGroup group = TimetableGroup.builder()
                 .user(user)
@@ -88,7 +88,7 @@ public class TimetableService {
                     List<CourseSchedule> schedules = scheduleMap.getOrDefault(c.getId(), Collections.emptyList());
                     return new TimetableCourseRecord(
                             c.getId(), c.getCourseName(),
-                            r.getName(), b.getName(), b.getCode(), t.getColor(),
+                            r.getName(), b.getId(), b.getName(), b.getCode(), t.getColor(),
                             schedules.stream()
                                     .map(s -> new TimetableCourseScheduleRecord(s.getDayOfWeek(), s.getStartTime(), s.getEndTime()))
                                     .toList()
@@ -158,7 +158,7 @@ public class TimetableService {
             List<CourseSchedule> schedules = scheduleMap.getOrDefault(c.getId(), Collections.emptyList());
             return new TimetableCourseRecord(
                     c.getId(), c.getCourseName(),
-                    r.getName(), b.getName(), b.getCode(), null,
+                    r.getName(), b.getId(), b.getName(), b.getCode(), null,
                     schedules.stream()
                             .map(s -> new TimetableCourseScheduleRecord(s.getDayOfWeek(), s.getStartTime(), s.getEndTime()))
                             .toList()
