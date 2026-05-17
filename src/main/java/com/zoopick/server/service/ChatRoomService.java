@@ -45,9 +45,8 @@ public class ChatRoomService {
         User requester = userRepository.findByIdOrThrow(requesterId);
         User counterpart = userRepository.findByIdOrThrow(createChatRoomRequest.getCounterpartId());
 
-        Optional<ChatRoom> existingChatRoom = chatRoomRepository.findByParticipantIdAndItemIdIs(requesterId, itemId);
+        Optional<ChatRoom> existingChatRoom = chatRoomRepository.findOpenByParticipantAndItem(requesterId, itemId);
         if (existingChatRoom.isPresent()) {
-            existingChatRoom.get().setStatus(ChatRoomStatus.OPEN);
             return new CreateChatRoomResult(false, chatRoomMapper.toChatRoomRecord(existingChatRoom.get()));
         }
 
@@ -64,9 +63,8 @@ public class ChatRoomService {
         User requester = userRepository.findByIdOrThrow(requesterId);
         User owner = userRepository.findByIdOrThrow(ownerId);
 
-        Optional<ChatRoom> existingChatRoom = chatRoomRepository.findByOwnerIdAndFinderIdIs(ownerId, requesterId);
+        Optional<ChatRoom> existingChatRoom = chatRoomRepository.findByOwnerIdAndFinderIdIsAndStatus(ownerId, requesterId, ChatRoomStatus.OPEN);
         if (existingChatRoom.isPresent()) {
-            existingChatRoom.get().setStatus(ChatRoomStatus.OPEN);
             return new CreateChatRoomResult(false, chatRoomMapper.toChatRoomRecord(existingChatRoom.get()));
         }
 
@@ -115,7 +113,7 @@ public class ChatRoomService {
     }
 
     public FindChatRoomResult findChatRoom(long userId, long itemId) {
-        Optional<Long> chatRoomId = chatRoomRepository.findByParticipantIdAndItemIdIs(userId, itemId)
+        Optional<Long> chatRoomId = chatRoomRepository.findOpenByParticipantAndItem(userId, itemId)
                 .map(ChatRoom::getId);
 
         return new FindChatRoomResult(chatRoomId.isPresent(), chatRoomId.orElse(0L));
@@ -229,8 +227,13 @@ public class ChatRoomService {
             throw new BadRequestException("이미 닫힌 채팅방입니다.", chatRoomId + " is already closed.");
 
         chatRoom.setStatus(reason.toChatRoomStatus());
+        chatRoom.setResolvedBy(sender);
         chatRoom.setResolvedAt(LocalDateTime.now());
         chatRoomRepository.save(chatRoom);
+
+        if (reason == ChatRoomCloseReason.RETURNED && chatRoom.getItem() != null) {
+            chatRoom.getItem().setStatus(ItemStatus.RETURNED);
+        }
 
         SendNotificationCommand command = new SendNotificationCommand(
                 "Zoopick",
@@ -253,6 +256,7 @@ public class ChatRoomService {
             throw new BadRequestException("이미 열린 채팅방입니다.", chatRoomId + " is already opened.");
 
         chatRoom.setStatus(ChatRoomStatus.OPEN);
+        chatRoom.setResolvedBy(null);
         chatRoom.setResolvedAt(null);
         chatRoomRepository.save(chatRoom);
 

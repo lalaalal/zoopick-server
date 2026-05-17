@@ -1,8 +1,11 @@
 package com.zoopick.server.repository;
 
 import com.zoopick.server.entity.ChatRoom;
+import com.zoopick.server.entity.ChatRoomStatus;
 import com.zoopick.server.exception.DataNotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -20,13 +23,12 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
         return findByOwnerIdOrFinderId(userId, userId);
     }
 
-    Optional<ChatRoom> findByOwnerIdOrFinderIdAndItemIdIs(long ownerId, long finderId, long itemId);
-
-    default Optional<ChatRoom> findByParticipantIdAndItemIdIs(long userId, long itemId) {
-        return findByOwnerIdOrFinderIdAndItemIdIs(userId, userId, itemId);
-    }
+    @Query("SELECT cr FROM ChatRoom cr WHERE (cr.owner.id = :userId OR cr.finder.id = :userId) AND cr.item.id = :itemId AND cr.status = 'OPEN'")
+    Optional<ChatRoom> findOpenByParticipantAndItem(@Param("userId") long userId, @Param("itemId") long itemId);
 
     long countByOwnerIdOrFinderId(Long ownerId, Long finderId);
 
     Optional<ChatRoom> findByOwnerIdAndFinderIdIs(long ownerId, long finderId);
+
+    Optional<ChatRoom> findByOwnerIdAndFinderIdIsAndStatus(long ownerId, long finderId, ChatRoomStatus status);
 }
