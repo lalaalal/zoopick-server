@@ -1,10 +1,15 @@
 package com.zoopick.server.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zoopick.server.dto.CommonResponse;
 import com.zoopick.server.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -14,11 +19,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.io.IOException;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -47,7 +55,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/lockers/*/commands/*/ack").permitAll()
 
                 .requestMatchers("/api/metadata/**").permitAll()
-                
+
                 // [수정 포인트] 실제 테스트 주소인 /api/auth/... 계열을 모두 허용 목록에 추가
                 .requestMatchers("/api/auth/login", "/api/auth/signup", "/api/auth/check-nickname", "/api/auth/validate").permitAll()
                 .requestMatchers("/api/auth/certification", "/api/auth/check-certification", "/api/auth/verify").permitAll()
@@ -63,11 +71,25 @@ public class SecurityConfig {
                 // 3. 그 외 모든 API (로그아웃, 내 정보 조회 등)는 반드시 '인증' 필요
                 .anyRequest().authenticated());
 
+        http.exceptionHandling((exceptions) -> exceptions
+                .authenticationEntryPoint((request, response, authException) ->
+                        writeErrorResponse(response, HttpStatus.UNAUTHORIZED, "인증이 필요합니다."))
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                        writeErrorResponse(response, HttpStatus.FORBIDDEN, "접근 권한이 없습니다."))
+        );
+
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         http.sessionManagement((session) -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
+    }
+
+    private void writeErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {
+        response.setStatus(status.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        objectMapper.writeValue(response.getWriter(), CommonResponse.error(message));
     }
 }

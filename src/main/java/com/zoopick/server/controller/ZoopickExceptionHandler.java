@@ -39,10 +39,16 @@ public class ZoopickExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(CommonResponse.error(errorMessage));
     }
 
-    @ExceptionHandler({HttpMessageNotReadableException.class, HttpRequestMethodNotSupportedException.class})
+    @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<CommonResponse<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
         log.warn(exception.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(CommonResponse.error("잘못된 요청입니다."));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<CommonResponse<Void>> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException exception) {
+        log.warn(exception.getMessage());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(CommonResponse.error("허용되지 않은 HTTP 메서드입니다."));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
