@@ -1,7 +1,6 @@
 package com.zoopick.server.service;
 
 import com.zoopick.server.config.MatchConfig;
-import com.zoopick.server.dto.match.CctvMatchCriteria;
 import com.zoopick.server.dto.match.CreateCctvMatchEvent;
 import com.zoopick.server.dto.match.SimilarItemProjection;
 import com.zoopick.server.entity.*;
@@ -158,27 +157,9 @@ class CctvMatchServiceTest {
             given(cctvDetectionMatchRepository.findLostItems(any(), any(), any(), anyFloat()))
                     .willReturn(List.of(projection));
             given(itemPostRepository.findAllByItemIdsWithItem(any())).willReturn(List.of(itemPost));
-            given(cctvMatchCriteriaResolver.resolve(lostItem))
-                    .willReturn(new CctvMatchCriteria(List.of(10L), LocalDateTime.now().minusHours(3)));
+            given(cctvMatchCriteriaResolver.resolveRoomIds(lostItem))
+                    .willReturn(List.of(10L));
             given(cctvDetectionMatchRepository.existsByCctvDetectionAndItem(cctvDetection, lostItem)).willReturn(true);
-
-            cctvMatchService.matchCctvToLostItems(1L);
-
-            then(cctvDetectionMatchRepository).should(never()).save(any());
-        }
-
-        @Test
-        @DisplayName("검출 시각이 기준 시작시간 이전이면 해당 아이템은 매칭하지 않는다")
-        void detectionBeforeSearchStart_skipsItem() {
-            SimilarItemProjection projection = mockProjection(100L, 0.9);
-            given(cctvDetectionRepository.findById(1L)).willReturn(Optional.of(cctvDetection));
-            given(matchConfig.getSimilarityThreshold()).willReturn(0.7f);
-            given(cctvDetectionMatchRepository.findLostItems(any(), any(), any(), anyFloat()))
-                    .willReturn(List.of(projection));
-            given(itemPostRepository.findAllByItemIdsWithItem(any())).willReturn(List.of(itemPost));
-            // searchStartTime을 검출 시각보다 미래로 설정 → 검출 시각이 기준 이전이 됨
-            given(cctvMatchCriteriaResolver.resolve(lostItem))
-                    .willReturn(new CctvMatchCriteria(List.of(10L), LocalDateTime.now().plusHours(1)));
 
             cctvMatchService.matchCctvToLostItems(1L);
 
@@ -194,9 +175,9 @@ class CctvMatchServiceTest {
             given(cctvDetectionMatchRepository.findLostItems(any(), any(), any(), anyFloat()))
                     .willReturn(List.of(projection));
             given(itemPostRepository.findAllByItemIdsWithItem(any())).willReturn(List.of(itemPost));
-            // criteria.roomIds()에 검출 room(10L)이 포함되지 않음
-            given(cctvMatchCriteriaResolver.resolve(lostItem))
-                    .willReturn(new CctvMatchCriteria(List.of(99L), LocalDateTime.now().minusHours(3)));
+            // resolveRoomIds()에 검출 room(10L)이 포함되지 않음
+            given(cctvMatchCriteriaResolver.resolveRoomIds(lostItem))
+                    .willReturn(List.of(99L));
 
             cctvMatchService.matchCctvToLostItems(1L);
 
@@ -232,8 +213,8 @@ class CctvMatchServiceTest {
             given(cctvDetectionMatchRepository.findLostItems(any(), any(), any(), anyFloat()))
                     .willReturn(List.of(projection));
             given(itemPostRepository.findAllByItemIdsWithItem(any())).willReturn(List.of(itemPost));
-            given(cctvMatchCriteriaResolver.resolve(lostItem))
-                    .willReturn(new CctvMatchCriteria(List.of(10L), LocalDateTime.now().minusHours(3)));
+            given(cctvMatchCriteriaResolver.resolveRoomIds(lostItem))
+                    .willReturn(List.of(10L));
             given(cctvDetectionMatchRepository.existsByCctvDetectionAndItem(cctvDetection, lostItem)).willReturn(false);
             given(cctvDetectionMatchRepository.save(any())).willReturn(savedMatch);
 
@@ -294,8 +275,8 @@ class CctvMatchServiceTest {
         void emptyRoomIds_returnsEarlyWithoutQuery() {
             given(itemRepository.findByIdOrThrow(100L)).willReturn(lostItem);
             given(itemPostRepository.findByItem(lostItem)).willReturn(lostItemPost);
-            given(cctvMatchCriteriaResolver.resolve(lostItem))
-                    .willReturn(new CctvMatchCriteria(List.of(), LocalDateTime.now().minusHours(3)));
+            given(cctvMatchCriteriaResolver.resolveRoomIds(lostItem))
+                    .willReturn(List.of());
 
             cctvMatchService.matchLostItemsToCctv(100L);
 
@@ -309,8 +290,8 @@ class CctvMatchServiceTest {
             given(itemRepository.findByIdOrThrow(100L)).willReturn(lostItem);
             given(itemPostRepository.findByItem(lostItem)).willReturn(lostItemPost);
             given(matchConfig.getSimilarityThreshold()).willReturn(0.7f);
-            given(cctvMatchCriteriaResolver.resolve(lostItem))
-                    .willReturn(new CctvMatchCriteria(List.of(10L), LocalDateTime.now().minusHours(3)));
+            given(cctvMatchCriteriaResolver.resolveRoomIds(lostItem))
+                    .willReturn(List.of(10L));
             given(cctvDetectionMatchRepository.findDetections(any(), any(), any(), any(), anyFloat()))
                     .willReturn(List.of());
 
@@ -327,8 +308,8 @@ class CctvMatchServiceTest {
             given(itemRepository.findByIdOrThrow(100L)).willReturn(lostItem);
             given(itemPostRepository.findByItem(lostItem)).willReturn(lostItemPost);
             given(matchConfig.getSimilarityThreshold()).willReturn(0.7f);
-            given(cctvMatchCriteriaResolver.resolve(lostItem))
-                    .willReturn(new CctvMatchCriteria(List.of(10L), LocalDateTime.now().minusHours(3)));
+            given(cctvMatchCriteriaResolver.resolveRoomIds(lostItem))
+                    .willReturn(List.of(10L));
             given(cctvDetectionMatchRepository.findDetections(any(), any(), any(), any(), anyFloat()))
                     .willReturn(List.of(projection));
             // detectionId=50L에 해당하는 CctvDetection 없음
@@ -346,8 +327,8 @@ class CctvMatchServiceTest {
             given(itemRepository.findByIdOrThrow(100L)).willReturn(lostItem);
             given(itemPostRepository.findByItem(lostItem)).willReturn(lostItemPost);
             given(matchConfig.getSimilarityThreshold()).willReturn(0.7f);
-            given(cctvMatchCriteriaResolver.resolve(lostItem))
-                    .willReturn(new CctvMatchCriteria(List.of(10L), LocalDateTime.now().minusHours(3)));
+            given(cctvMatchCriteriaResolver.resolveRoomIds(lostItem))
+                    .willReturn(List.of(10L));
             given(cctvDetectionMatchRepository.findDetections(any(), any(), any(), any(), anyFloat()))
                     .willReturn(List.of(projection));
             given(cctvDetectionRepository.findAllById(any())).willReturn(List.of(cctvDetection));
@@ -368,8 +349,8 @@ class CctvMatchServiceTest {
             given(itemPostRepository.findByItem(lostItem)).willReturn(lostItemPost);
             given(matchConfig.getSimilarityThreshold()).willReturn(0.7f);
             given(matchConfig.getColorBonus()).willReturn(1.1f);
-            given(cctvMatchCriteriaResolver.resolve(lostItem))
-                    .willReturn(new CctvMatchCriteria(List.of(10L), LocalDateTime.now().minusHours(3)));
+            given(cctvMatchCriteriaResolver.resolveRoomIds(lostItem))
+                    .willReturn(List.of(10L));
             given(cctvDetectionMatchRepository.findDetections(any(), any(), any(), any(), anyFloat()))
                     .willReturn(List.of(projection));
             given(cctvDetectionRepository.findAllById(any())).willReturn(List.of(cctvDetection));

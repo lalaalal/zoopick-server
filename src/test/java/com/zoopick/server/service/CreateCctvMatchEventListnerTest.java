@@ -2,6 +2,7 @@ package com.zoopick.server.service;
 
 import com.zoopick.server.dto.match.CreateCctvMatchEvent;
 import com.zoopick.server.entity.*;
+import com.zoopick.server.repository.UserRepository;
 import com.zoopick.server.service.notification.NotificationService;
 import com.zoopick.server.service.notification.SendNotificationCommand;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,6 +25,7 @@ import static org.mockito.BDDMockito.*;
 class CreateCctvMatchEventListnerTest {
 
     @Mock NotificationService notificationService;
+    @Mock UserRepository userRepository;
 
     @InjectMocks CreateCctvMatchEventListner listener;
 
@@ -57,12 +60,21 @@ class CreateCctvMatchEventListnerTest {
         itemPost = ItemPost.builder().id(1L).item(item).title("지갑 잃어버렸어요").build();
         room = Room.builder().id(10L).name("101호").build();
 
-        event = new CreateCctvMatchEvent(item, match, cctvDetection, itemPost, room);
+        event = new CreateCctvMatchEvent(List.of(new CreateCctvMatchEvent.Entry(
+                match.getId(),
+                match.getScore(),
+                item.getId(),
+                reporter.getId(),
+                itemPost.getTitle(),
+                room.getName()
+        )));
     }
 
     @Test
     @DisplayName("매칭 이벤트 수신 시 신고자에게 FCM 알림을 전송한다")
     void handleMatchCreated_sendsNotificationToReporter() {
+        given(userRepository.findAllById(any())).willReturn(List.of(reporter));
+
         listener.handleMatchCreated(event);
 
         then(notificationService).should().send(eq(reporter), any(SendNotificationCommand.class));
@@ -71,6 +83,7 @@ class CreateCctvMatchEventListnerTest {
     @Test
     @DisplayName("알림 제목에 '도난 의심'이 포함된다")
     void handleMatchCreated_notificationTitleContainsTheftSuspected() {
+        given(userRepository.findAllById(any())).willReturn(List.of(reporter));
         ArgumentCaptor<SendNotificationCommand> captor = ArgumentCaptor.forClass(SendNotificationCommand.class);
 
         listener.handleMatchCreated(event);
@@ -82,6 +95,7 @@ class CreateCctvMatchEventListnerTest {
     @Test
     @DisplayName("알림 본문에 게시글 제목과 장소명이 포함된다")
     void handleMatchCreated_notificationBodyContainsTitleAndRoom() {
+        given(userRepository.findAllById(any())).willReturn(List.of(reporter));
         ArgumentCaptor<SendNotificationCommand> captor = ArgumentCaptor.forClass(SendNotificationCommand.class);
 
         listener.handleMatchCreated(event);
