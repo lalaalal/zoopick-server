@@ -66,16 +66,6 @@ public class ChatRoomService {
         User requester = userRepository.findByIdOrThrow(requesterId);
         User owner = userRepository.findByIdOrThrow(ownerId);
 
-        Optional<ChatRoom> existingChatRoom = chatRoomRepository.findByOwnerIdAndFinderIdIsAndStatus(ownerId, requesterId, ChatRoomStatus.OPEN);
-        if (existingChatRoom.isPresent()) {
-            notificationService.send(owner, new SendNotificationCommand(
-                    requester.getNickname(),
-                    "분실물을 발견했어요!",
-                    new QrScannedPayload(existingChatRoom.get().getId(), requester.getNickname())
-            ));
-            return new CreateChatRoomResult(false, chatRoomMapper.toChatRoomRecord(existingChatRoom.get()));
-        }
-
         Item item = itemPostService.createEmptyItem(requester, ItemType.FOUND, ItemStatus.REPORTED);
         ChatRoom chatRoom = ChatRoom.builder()
                 .owner(owner)
