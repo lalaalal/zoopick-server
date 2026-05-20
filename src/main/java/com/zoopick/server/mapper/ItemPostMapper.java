@@ -13,6 +13,7 @@ public class ItemPostMapper {
     public ItemPostRecord toItemPostRecord(ItemPost itemPost) {
         return ItemPostRecord.builder()
                 .id(itemPost.getId())
+                .itemId(itemPost.getItem().getId())
                 .title(itemPost.getTitle())
                 .name(itemPost.getItem().getCategory().getDisplayName())
                 .description(itemPost.getDescription())

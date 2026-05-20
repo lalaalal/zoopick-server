@@ -32,6 +32,16 @@ public class ItemPostService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
+    public Item createEmptyItem(User reporter, ItemType type, ItemStatus status) {
+        Item item = Item.builder()
+                .reporter(reporter)
+                .type(type)
+                .status(status)
+                .build();
+        return itemRepository.save(item);
+    }
+
+    @Transactional
     public CreateItemPostResult createItemPost(long userId, CreateItemPostRequest request) {
         User user = userRepository.findByIdOrThrow(userId);
         Building building = buildingRepository.findByIdOrThrow(request.getBuildingId());

@@ -12,6 +12,7 @@ import com.zoopick.server.repository.UserRepository;
 import com.zoopick.server.service.notification.NotificationService;
 import com.zoopick.server.service.notification.SendNotificationCommand;
 import com.zoopick.server.service.notification.payload.ChatMessagePayload;
+import com.zoopick.server.service.notification.payload.QrScannedPayload;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -34,6 +35,7 @@ public class ChatRoomService {
     private final NotificationService notificationService;
     private final ChatMessageMapper chatMessageMapper;
     private final ChatRoomMapper chatRoomMapper;
+    private final ItemPostService itemPostService;
 
     @Transactional
     public CreateChatRoomResult createChatRoom(long requesterId, CreateChatRoomRequest createChatRoomRequest) {
@@ -59,20 +61,23 @@ public class ChatRoomService {
         return new CreateChatRoomResult(true, chatRoomMapper.toChatRoomRecord(savedChatRoom));
     }
 
+    @Transactional
     public CreateChatRoomResult createChatRoomByOwner(long requesterId, long ownerId) {
         User requester = userRepository.findByIdOrThrow(requesterId);
         User owner = userRepository.findByIdOrThrow(ownerId);
 
-        Optional<ChatRoom> existingChatRoom = chatRoomRepository.findByOwnerIdAndFinderIdIsAndStatus(ownerId, requesterId, ChatRoomStatus.OPEN);
-        if (existingChatRoom.isPresent()) {
-            return new CreateChatRoomResult(false, chatRoomMapper.toChatRoomRecord(existingChatRoom.get()));
-        }
-
+        Item item = itemPostService.createEmptyItem(requester, ItemType.FOUND, ItemStatus.REPORTED);
         ChatRoom chatRoom = ChatRoom.builder()
                 .owner(owner)
                 .finder(requester)
+                .item(item)
                 .build();
         ChatRoom savedChatRoom = chatRoomRepository.save(chatRoom);
+        notificationService.send(owner, new SendNotificationCommand(
+                requester.getNickname(),
+                "분실물을 발견했어요!",
+                new QrScannedPayload(savedChatRoom.getId(), requester.getNickname())
+        ));
         return new CreateChatRoomResult(true, chatRoomMapper.toChatRoomRecord(savedChatRoom));
     }
 

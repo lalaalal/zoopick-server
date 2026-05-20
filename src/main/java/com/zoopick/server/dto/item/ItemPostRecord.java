@@ -20,6 +20,8 @@ public class ItemPostRecord {
     private long id;
     private String title;
     private String description;
+    @JsonProperty("item_id")
+    private long itemId;
     private ItemType type;
     private ItemStatus status;
     private ItemCategory category;
