@@ -68,6 +68,11 @@ public class ChatRoomService {
 
         Optional<ChatRoom> existingChatRoom = chatRoomRepository.findByOwnerIdAndFinderIdIsAndStatus(ownerId, requesterId, ChatRoomStatus.OPEN);
         if (existingChatRoom.isPresent()) {
+            notificationService.send(owner, new SendNotificationCommand(
+                    requester.getNickname(),
+                    "분실물을 발견했어요!",
+                    new QrScannedPayload(existingChatRoom.get().getId(), requester.getNickname())
+            ));
             return new CreateChatRoomResult(false, chatRoomMapper.toChatRoomRecord(existingChatRoom.get()));
         }
 

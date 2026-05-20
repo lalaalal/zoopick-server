@@ -2,6 +2,7 @@ package com.zoopick.server.websocket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zoopick.server.exception.BadRequestException;
 import com.zoopick.server.exception.DataNotFoundException;
 import com.zoopick.server.exception.InternalServerException;
 import com.zoopick.server.service.ChatRoomService;
@@ -60,6 +61,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             log.error("Failed to handle websocket message. sessionId={}", session.getId(), exception);
         } catch (DataNotFoundException exception) {
             chatEventSender.sendErrorSafely(session, ChatErrorPayload.Reason.NOT_FOUND, exception.getClientMessage());
+        } catch (BadRequestException exception) {
+            chatEventSender.sendErrorSafely(session, ChatErrorPayload.Reason.BAD_REQUEST, exception.getClientMessage());
         } catch (JsonProcessingException exception) {
             chatEventSender.sendErrorSafely(session, ChatErrorPayload.Reason.BAD_REQUEST, "잘못된 형식의 요청입니다.");
             log.warn("Failed to parse request. sessionId={}", session.getId(), exception);
