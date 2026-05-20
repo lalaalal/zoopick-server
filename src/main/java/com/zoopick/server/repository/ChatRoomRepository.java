@@ -24,7 +24,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
         return findByOwnerIdOrFinderId(userId, userId);
     }
 
-    @Query("SELECT cr FROM ChatRoom cr WHERE (cr.owner.id = :userId OR cr.finder.id = :userId) AND cr.item.id = :itemId AND cr.status = 'OPEN'")
+    @Query("SELECT cr FROM ChatRoom cr WHERE (cr.owner.id = :userId OR cr.finder.id = :userId) AND cr.item.id = :itemId")
     Optional<ChatRoom> findOpenByParticipantAndItem(@Param("userId") long userId, @Param("itemId") long itemId);
 
     long countByOwnerIdOrFinderId(Long ownerId, Long finderId);
