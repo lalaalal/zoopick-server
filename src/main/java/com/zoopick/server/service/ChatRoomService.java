@@ -59,6 +59,7 @@ public class ChatRoomService {
         return new CreateChatRoomResult(true, chatRoomMapper.toChatRoomRecord(savedChatRoom));
     }
 
+    @Transactional
     public CreateChatRoomResult createChatRoomByOwner(long requesterId, long ownerId) {
         User requester = userRepository.findByIdOrThrow(requesterId);
         User owner = userRepository.findByIdOrThrow(ownerId);

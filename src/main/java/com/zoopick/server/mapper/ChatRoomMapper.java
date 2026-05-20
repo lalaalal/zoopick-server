@@ -17,6 +17,7 @@ public class ChatRoomMapper {
                 .ownerNickname(chatRoom.getOwner().getNickname())
                 .finderNickname(chatRoom.getFinder().getNickname())
                 .itemName(resolveItemDetail(chatRoom.getItem()))
+                .itemId(chatRoom.getItem().getId())
                 .build();
     }
 
