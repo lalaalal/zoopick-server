@@ -20,5 +20,5 @@ public class ChatRoomRecord {
     @JsonProperty("item_name")
     private String itemName;
     @JsonProperty("item_id")
-    private long itemId;
+    private Long itemId;
 }
