@@ -84,6 +84,20 @@ public class ItemPostController {
         return ResponseEntity.ok(CommonResponse.success(result));
     }
 
+    @Operation(summary = "게시글 단건 조회", description = "아이템 ID로 분실물/습득물 게시글 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "게시글 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
+    @GetMapping("/post/by-item/{itemId}")
+    public ResponseEntity<CommonResponse<ItemPostRecord>> getItemPostByItemId(
+            @Parameter(description = "조회할 게시글 ID", example = "1")
+            @PathVariable long itemId
+    ) {
+        ItemPostRecord result = itemPostService.getItemPostByItemId(itemId);
+        return ResponseEntity.ok(CommonResponse.success(result));
+    }
+
     @Operation(summary = "내 게시글 목록 조회", description = "현재 로그인한 사용자가 등록한 분실물(LOST) 또는 습득물(FOUND) 게시글 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공"),

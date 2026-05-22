@@ -55,7 +55,7 @@ public class ItemPostService {
                 .item(savedItem)
                 .build();
         ItemPost savedItemPost = itemPostRepository.save(itemPost);
-        return new CreateItemPostResult(savedItemPost.getId(), savedItem.getStatus(), "등록되었습니다.");
+        return new CreateItemPostResult(savedItemPost.getId(), savedItem.getId(), savedItem.getStatus(), "등록되었습니다.");
     }
 
     public ListItemPostResult getItemPosts(@Nullable ItemPostFilter filter, Pageable pageable) {
@@ -69,6 +69,11 @@ public class ItemPostService {
 
     public ItemPostRecord getItemPost(long id) {
         ItemPost itemPost = itemPostRepository.findByIdOrThrow(id);
+        return itemPostMapper.toItemPostRecord(itemPost);
+    }
+
+    public ItemPostRecord getItemPostByItemId(long id) {
+        ItemPost itemPost = itemPostRepository.findByItemIdOrThrow(id);
         return itemPostMapper.toItemPostRecord(itemPost);
     }
 

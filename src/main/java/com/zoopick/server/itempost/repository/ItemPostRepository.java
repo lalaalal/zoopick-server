@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ItemPostRepository extends JpaRepository<ItemPost, Long>, JpaSpecificationExecutor<ItemPost> {
@@ -62,4 +63,11 @@ public interface ItemPostRepository extends JpaRepository<ItemPost, Long>, JpaSp
     List<ItemPost> findAllByItemIdsWithItem(@Param("itemIds") List<Long> itemIds);
 
     List<ItemPost> findAllByUser_IdAndItem_Type(Long userId, ItemType type);
+
+    Optional<ItemPost> findByItemId(long id);
+
+    default ItemPost findByItemIdOrThrow(long id) {
+        return findByItemId(id)
+                .orElseThrow(() -> DataNotFoundException.from("게시물/아이템", id));
+    }
 }

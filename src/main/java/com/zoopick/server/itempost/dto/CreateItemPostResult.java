@@ -15,6 +15,9 @@ public class CreateItemPostResult {
     @JsonProperty("item_post_id")
     private long itemPostId;
     @NotBlank
+    @JsonProperty("item_id")
+    private long itemId;
+    @NotBlank
     @JsonProperty("item_status")
     private ItemStatus itemStatus;
     private String message;
