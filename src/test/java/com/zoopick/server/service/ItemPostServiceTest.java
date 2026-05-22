@@ -1,12 +1,18 @@
 package com.zoopick.server.service;
 
-import com.zoopick.server.dto.item.*;
-import com.zoopick.server.entity.*;
-import com.zoopick.server.mapper.ItemPostMapper;
-import com.zoopick.server.repository.BuildingRepository;
-import com.zoopick.server.repository.ItemPostRepository;
-import com.zoopick.server.repository.ItemRepository;
-import com.zoopick.server.repository.UserRepository;
+import com.zoopick.server.auth.entity.User;
+import com.zoopick.server.auth.repository.UserRepository;
+import com.zoopick.server.item.entity.Item;
+import com.zoopick.server.item.entity.ItemStatus;
+import com.zoopick.server.item.event.ItemCreatedEvent;
+import com.zoopick.server.item.repository.ItemRepository;
+import com.zoopick.server.itempost.dto.*;
+import com.zoopick.server.itempost.entity.ItemPost;
+import com.zoopick.server.itempost.mapper.ItemPostMapper;
+import com.zoopick.server.itempost.repository.ItemPostRepository;
+import com.zoopick.server.itempost.service.ItemPostService;
+import com.zoopick.server.metadata.entity.Building;
+import com.zoopick.server.metadata.repository.BuildingRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
