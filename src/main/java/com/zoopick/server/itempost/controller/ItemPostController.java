@@ -15,6 +15,7 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -63,7 +64,8 @@ public class ItemPostController {
             @RequestParam(defaultValue = "20") int size,
             @RequestBody(required = false) @Nullable ItemPostFilter filter
     ) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size)
+                .withSort(Sort.by(Sort.Direction.ASC, "createdAt"));
         ListItemPostResult result = itemPostService.getItemPosts(filter, pageable);
         return ResponseEntity.ok(CommonResponse.success(result));
     }

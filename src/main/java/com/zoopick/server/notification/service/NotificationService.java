@@ -155,7 +155,8 @@ public class NotificationService {
         return changeReadStatusRequest(userId, notificationIds, notification -> notification.setReadAt(null));
     }
 
-    private ChangeReadStatusResult changeReadStatusRequest(long userId, List<Long> notificationIds, Consumer<ZoopickNotification> readStatusChangeAction) {
+    @Transactional
+    protected ChangeReadStatusResult changeReadStatusRequest(long userId, List<Long> notificationIds, Consumer<ZoopickNotification> readStatusChangeAction) {
         List<ZoopickNotification> notifications = notificationRepository.findAllById(notificationIds);
         if (notifications.isEmpty())
             throw DataNotFoundException.from("알림", notificationIds);
@@ -170,7 +171,6 @@ public class NotificationService {
         if (succeedIds.isEmpty())
             throw new BadRequestException("현재 사용자의 알림이 아닙니다.");
 
-        notificationRepository.saveAll(notifications);
         return new ChangeReadStatusResult(succeedIds);
     }
 

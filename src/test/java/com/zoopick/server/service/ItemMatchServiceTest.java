@@ -239,7 +239,7 @@ class ItemMatchServiceTest {
         when(request.getLostItemId()).thenReturn(100L);
         when(request.getFoundItemId()).thenReturn(200L);
 
-        foundItem.setStatus(ItemStatus.IN_LOCKER); // 보관함 상태로 변경
+        foundItem.changeStatus(ItemStatus.IN_LOCKER); // 보관함 상태로 변경
         Locker locker = Locker.builder().id(5L).build();
 
         when(itemRepository.findByIdOrThrow(100L)).thenReturn(lostItem);

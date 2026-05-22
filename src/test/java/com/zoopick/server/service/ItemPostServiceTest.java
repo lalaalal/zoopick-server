@@ -28,7 +28,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -92,7 +92,7 @@ class ItemPostServiceTest {
         when(request.getBuildingId()).thenReturn(10L);
         when(request.getTitle()).thenReturn("지갑 찾습니다");
         when(request.getDescription()).thenReturn("검은색 가죽 지갑입니다.");
-        when(request.getReportedAt()).thenReturn(LocalDateTime.now());
+        when(request.getReportedAt()).thenReturn(OffsetDateTime.now());
 
         when(userRepository.findByIdOrThrow(1L)).thenReturn(user);
         when(buildingRepository.findByIdOrThrow(10L)).thenReturn(building);

@@ -128,8 +128,8 @@ public class ItemMatchService {
 
         boolean wasInLocker = foundItem.getStatus() == ItemStatus.IN_LOCKER;
 
-        lostItem.setStatus(ItemStatus.MATCHED);
-        foundItem.setStatus(ItemStatus.MATCHED);
+        lostItem.changeStatus(ItemStatus.MATCHED);
+        foundItem.changeStatus(ItemStatus.MATCHED);
         itemMatch.setStatus(MatchStatus.CONFIRMED);
 
         itemMatchRepository.rejectOthersByLostItem(matchId, lostItem.getId(), foundItem.getId());
@@ -190,8 +190,8 @@ public class ItemMatchService {
                 .build());
 
         // 수동 매칭 확정
-        lostItem.setStatus(ItemStatus.MATCHED);
-        foundItem.setStatus(ItemStatus.MATCHED);
+        lostItem.changeStatus(ItemStatus.MATCHED);
+        foundItem.changeStatus(ItemStatus.MATCHED);
 
         itemMatchRepository.rejectOthersByLostItem(savedMatch.getId(), lostItem.getId(), foundItem.getId());
         log.info("매칭 저장 완료 ID: {}", savedMatch.getId());
