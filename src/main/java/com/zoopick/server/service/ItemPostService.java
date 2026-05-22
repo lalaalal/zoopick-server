@@ -4,19 +4,17 @@ import com.zoopick.server.dto.item.*;
 import com.zoopick.server.entity.*;
 import com.zoopick.server.exception.DataNotFoundException;
 import com.zoopick.server.exception.ForbiddenException;
+import com.zoopick.server.mapper.CreateItemCommandMapper;
 import com.zoopick.server.mapper.ItemPostMapper;
 import com.zoopick.server.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -29,39 +27,14 @@ public class ItemPostService {
     private final BuildingRepository buildingRepository;
     private final ItemMatchRepository itemMatchRepository;
     private final ItemPostMapper itemPostMapper;
-    private final ApplicationEventPublisher eventPublisher;
-
-    @Transactional
-    public Item createEmptyItem(User reporter, ItemType type, ItemStatus status) {
-        Item item = Item.builder()
-                .reporter(reporter)
-                .type(type)
-                .status(status)
-                .build();
-        return itemRepository.save(item);
-    }
+    private final ItemService itemService;
+    private final CreateItemCommandMapper createItemCommandMapper;
 
     @Transactional
     public CreateItemPostResult createItemPost(long userId, CreateItemPostRequest request) {
         User user = userRepository.findByIdOrThrow(userId);
         Building building = buildingRepository.findByIdOrThrow(request.getBuildingId());
-        Item item = Item.builder()
-                .reporter(user)
-                .type(request.getType())
-                .status(ItemStatus.REPORTED)
-                .category(request.getCategory())
-                .color(request.getColor())
-                .embedding(null)
-                .reportedBuilding(building)
-                .locationName(request.getDetailAddress())
-                .imageUrl(request.getImageUrl())
-                .reportedAt(request.getReportedAt() != null
-                        ? request.getReportedAt().atZoneSameInstant(ZoneId.of("Asia/Seoul")).toLocalDateTime()
-                        : LocalDateTime.now())
-                .build();
-
-        Item savedItem = itemRepository.save(item);
-        eventPublisher.publishEvent(new ItemCreatedEvent(savedItem.getId(), item.getType()));
+        Item savedItem = itemService.createItem(createItemCommandMapper.toCreateItemCommand(user, building, request));
 
         ItemPost itemPost = ItemPost.builder()
                 .title(request.getTitle())

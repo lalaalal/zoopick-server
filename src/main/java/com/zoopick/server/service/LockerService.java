@@ -24,6 +24,7 @@ public class LockerService {
     private final UserRepository userRepository;
     private final ItemMatchRepository itemMatchRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final ItemService itemService;
 
     @Transactional
     public LockerCommand requestUnlock(Long userId, Long lockerId, Long itemId) {
@@ -79,7 +80,7 @@ public class LockerService {
 
         locker.setStatus(LockerStatus.IN_USE);
         locker.setCurrentItem(item);
-        item.setStatus(ItemStatus.IN_LOCKER);
+        item.changeStatus(ItemStatus.IN_LOCKER);
 
         log.info("[STORE] locker_id={} item_id={} user_id={} 보관 요청",
                 locker.getId(), itemId, userId);
@@ -99,12 +100,9 @@ public class LockerService {
                     "User " + userId + " has no permission to retrieve item " + stored.getId());
         }
 
-        LocalDateTime now = LocalDateTime.now();
-
         locker.setStatus(LockerStatus.EMPTY);
         locker.setCurrentItem(null);
-        stored.setStatus(ItemStatus.RETURNED);
-        stored.setReturnedAt(now);
+        itemService.markItemAsReturned(stored.getId());
 
         log.info("[RETRIEVE] locker_id={} item_id={} user_id={} 회수 요청",
                 locker.getId(), stored.getId(), userId);

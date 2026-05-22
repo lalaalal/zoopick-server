@@ -22,9 +22,9 @@ public class ChatRoomMapper {
     }
 
     private String resolveItemDetail(@Nullable Item item) {
-        if (item == null || item.getCategory() == null)
+        if (item == null)
             return "";
-        return item.getCategory().getDisplayName();
+        return item.getDisplayName();
     }
 
     @Nullable

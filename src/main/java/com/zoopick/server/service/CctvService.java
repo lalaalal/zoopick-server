@@ -381,7 +381,7 @@ public class CctvService {
             LocalDateTime now = LocalDateTime.now();
             Item lostItem = cctvDetectionMatch.getItem();
             lostItem.theftSuspected(now);
-            lostItem.setStatus(ItemStatus.THEFT_CONFIRMED);
+            lostItem.changeStatus(ItemStatus.THEFT_CONFIRMED);
             cctvDetectionMatchRepository.rejectOtherPendingMatches( // 나머지 reject 처리
                     lostItem.getId(),
                     matchId,

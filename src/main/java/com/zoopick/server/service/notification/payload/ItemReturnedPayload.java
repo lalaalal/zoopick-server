@@ -1,7 +1,6 @@
 package com.zoopick.server.service.notification.payload;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.zoopick.server.entity.ItemPost;
 import com.zoopick.server.entity.NotificationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.jspecify.annotations.NullMarked;
@@ -18,14 +17,14 @@ public record ItemReturnedPayload(
         @Schema(description = "물품 ID", example = "10")
         long itemId,
 
-        @JsonProperty("item_post_id")
-        @Schema(description = "게시글 ID", example = "45")
-        long itemPostId
-) implements NotificationPayload {
-    public static ItemReturnedPayload of(ItemPost itemPost) {
-        return new ItemReturnedPayload(itemPost.getItem().getId(), itemPost.getId());
-    }
+        @JsonProperty("item_category")
+        @Schema(description = "물품 카테고리", example = "우산")
+        String itemCategory,
 
+        @JsonProperty("owner_nickname")
+        @Schema(description = "물품 소유자", example = "zoopickUser")
+        String ownerNickname
+) implements NotificationPayload {
     @Override
     public NotificationType type() {
         return NotificationType.ITEM_RETURNED;
@@ -35,7 +34,8 @@ public record ItemReturnedPayload(
     public Map<String, String> toMap() {
         return Map.of(
                 "item_id", String.valueOf(itemId),
-                "item_post_id", String.valueOf(itemPostId)
+                "item_category", itemCategory,
+                "owner_nickname", ownerNickname
         );
     }
 }

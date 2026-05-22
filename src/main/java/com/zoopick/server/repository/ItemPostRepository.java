@@ -17,9 +17,9 @@ import java.util.List;
 public interface ItemPostRepository extends JpaRepository<ItemPost, Long>, JpaSpecificationExecutor<ItemPost> {
     static Specification<ItemPost> hasStatus(ItemStatus status) {
         return (root, query, criteriaBuilder) -> {
-            if (status == null)
-                return null;
             Join<Object, Object> itemJoin = root.join("item");
+            if (status == null)
+                return criteriaBuilder.not(itemJoin.get("status").equalTo(ItemStatus.RETURNED));
             return criteriaBuilder.equal(itemJoin.get("status"), status);
         };
     }
@@ -44,7 +44,7 @@ public interface ItemPostRepository extends JpaRepository<ItemPost, Long>, JpaSp
 
     static Specification<ItemPost> applyFilter(ItemPostFilter filter) {
         if (filter == null)
-            return Specification.unrestricted();
+            return Specification.where(hasStatus(null));
         return Specification.where(hasStatus(filter.getStatus()))
                 .and(hasCategory(filter.getCategory()))
                 .and(hasColor(filter.getColor()));

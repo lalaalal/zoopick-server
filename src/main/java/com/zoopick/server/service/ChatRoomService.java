@@ -1,5 +1,6 @@
 package com.zoopick.server.service;
 
+import com.zoopick.server.chat.ChatRoomParticipantHelper;
 import com.zoopick.server.dto.chat.*;
 import com.zoopick.server.entity.*;
 import com.zoopick.server.exception.BadRequestException;
@@ -35,7 +36,7 @@ public class ChatRoomService {
     private final NotificationService notificationService;
     private final ChatMessageMapper chatMessageMapper;
     private final ChatRoomMapper chatRoomMapper;
-    private final ItemPostService itemPostService;
+    private final ItemService itemService;
 
     @Transactional
     public CreateChatRoomResult createChatRoom(long requesterId, CreateChatRoomRequest createChatRoomRequest) {
@@ -54,8 +55,8 @@ public class ChatRoomService {
 
         ChatRoom chatRoom = ChatRoom.builder()
                 .item(item)
-                .owner(resolveOwner(item.getType(), requester, counterpart))
-                .finder(resolveFinder(item.getType(), requester, counterpart))
+                .owner(ChatRoomParticipantHelper.resolveOwner(item.getType(), requester, counterpart))
+                .finder(ChatRoomParticipantHelper.resolveFinder(item.getType(), requester, counterpart))
                 .build();
         ChatRoom savedChatRoom = chatRoomRepository.save(chatRoom);
         return new CreateChatRoomResult(true, chatRoomMapper.toChatRoomRecord(savedChatRoom));
@@ -66,7 +67,7 @@ public class ChatRoomService {
         User requester = userRepository.findByIdOrThrow(requesterId);
         User owner = userRepository.findByIdOrThrow(ownerId);
 
-        Item item = itemPostService.createEmptyItem(requester, ItemType.FOUND, ItemStatus.REPORTED);
+        Item item = itemService.createEmptyItem(requester, ItemType.FOUND, ItemStatus.REPORTED);
         ChatRoom chatRoom = ChatRoom.builder()
                 .owner(owner)
                 .finder(requester)
@@ -81,54 +82,11 @@ public class ChatRoomService {
         return new CreateChatRoomResult(true, chatRoomMapper.toChatRoomRecord(savedChatRoom));
     }
 
-    /**
-     * 이 <b>요청을 보낸 사람은 게시글을 보고 요청</b>을 보낸다.<br/>
-     * <p>item type이 <b>{@link ItemType#FOUND}</b>일 경우 게시글을 작성한 사람은 발견한 사람.
-     * <u>이 요청을 보낸 사람이 분실물의 주인</u>이다.<p/>
-     * <p>item type이 <b>{@link ItemType#LOST}</b>일 경우 게시글을 작성한 사람은 분실물의 주인.
-     * <u>이 요청의 상대가 분실물의 주인</u>이다.<p/>
-     *
-     * @param itemType    게시글의 종류 (FOUND | LOST)
-     * @param requester   게시글을 보고 채팅을 요청한 사람
-     * @param counterpart 게시글 작성자
-     * @return 분실물의 주인
-     */
-    private User resolveOwner(ItemType itemType, User requester, User counterpart) {
-        if (itemType == ItemType.FOUND)
-            return requester;
-        return counterpart;
-    }
-
-    /**
-     * 이 <b>요청을 보낸 사람은 게시글을 보고 요청</b>을 보낸다.<br/>
-     * <p>item type이 <b>{@link ItemType#FOUND}</b>일 경우 게시글을 작성한 사람은 발견한 사람.
-     * <u>이 요청의 상대가 발견한 사람</u>이다.<p/>
-     * <p>item type이 <b>{@link ItemType#LOST}</b>일 경우 게시글을 작성한 사람은 분실물의 주인.
-     * <u>이 요청을 보낸 사람이 발견한 사람</u>이다.<p/>
-     *
-     * @param itemType    게시글의 종류 (FOUND | LOST)
-     * @param requester   게시글을 보고 채팅을 요청한 사람
-     * @param counterpart 게시글 작성자
-     * @return 분실물을 발견한 사람
-     */
-    private User resolveFinder(ItemType itemType, User requester, User counterpart) {
-        if (itemType == ItemType.FOUND)
-            return counterpart;
-        return requester;
-    }
-
     public FindChatRoomResult findChatRoom(long userId, long itemId) {
         Optional<Long> chatRoomId = chatRoomRepository.findOpenByParticipantAndItem(userId, itemId)
                 .map(ChatRoom::getId);
 
         return new FindChatRoomResult(chatRoomId.isPresent(), chatRoomId.orElse(0L));
-    }
-
-    private void verifyParticipant(ChatRoom chatRoom, User user) {
-        User owner = chatRoom.getOwner();
-        User finder = chatRoom.getFinder();
-        if (!(owner.getId().equals(user.getId()) || finder.getId().equals(user.getId())))
-            throw new BadRequestException("사용자가 포함되지 않은 채팅방입니다.", user.getId() + " is not in chat room " + chatRoom.getId());
     }
 
     public ListChatRoomResult getChatRooms(long userId) {
@@ -142,7 +100,7 @@ public class ChatRoomService {
     public ChatRoomRecord getChatRoom(long userId, long chatRoomId) {
         User user = userRepository.findByIdOrThrow(userId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
-        verifyParticipant(chatRoom, user);
+        ChatRoomParticipantHelper.verifyParticipant(chatRoom, user);
 
         return chatRoomMapper.toChatRoomRecord(chatRoom);
     }
@@ -155,7 +113,7 @@ public class ChatRoomService {
     public ListMessagesResult getMessages(long userId, long chatRoomId, @Nullable MessageFilter filter) {
         User user = userRepository.findByIdOrThrow(userId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
-        verifyParticipant(chatRoom, user);
+        ChatRoomParticipantHelper.verifyParticipant(chatRoom, user);
 
         List<ChatMessage> messages = chatMessageRepository.findByRoomOrderBySentAt(chatRoom, ChatMessageRepository.applyFilter(filter));
         List<MessageRecord> messageRecords = messages.stream()
@@ -168,11 +126,11 @@ public class ChatRoomService {
     private MessageContext sendMessage(long senderId, long chatRoomId, String message) {
         User sender = userRepository.findByIdOrThrow(senderId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
-        verifyParticipant(chatRoom, sender);
+        ChatRoomParticipantHelper.verifyParticipant(chatRoom, sender);
         if (chatRoom.getStatus() != ChatRoomStatus.OPEN)
             throw new BadRequestException("이미 종료된 채팅방입니다.", chatRoomId + " is closed");
 
-        User receiver = resolveReceiver(chatRoom, sender);
+        User receiver = ChatRoomParticipantHelper.resolveReceiver(chatRoom, sender);
         ChatMessage chatMessage = ChatMessage.builder()
                 .room(chatRoom)
                 .sender(sender)
@@ -201,19 +159,11 @@ public class ChatRoomService {
         );
     }
 
-    private User resolveReceiver(ChatRoom chatRoom, User sender) {
-        User owner = chatRoom.getOwner();
-        User finder = chatRoom.getFinder();
-        if (finder.getId().equals(sender.getId()))
-            return owner;
-        return finder;
-    }
-
     @Transactional
     public void readChatMessages(long userId, long chatRoomId) {
         User user = userRepository.findByIdOrThrow(userId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
-        verifyParticipant(chatRoom, user);
+        ChatRoomParticipantHelper.verifyParticipant(chatRoom, user);
 
         List<ChatMessage> messages = chatMessageRepository.findByRoomAndSenderIsNot(chatRoom, user);
         messages.forEach(message -> message.setReadAt(LocalDateTime.now()));
@@ -225,9 +175,9 @@ public class ChatRoomService {
     public void closeChatRoom(long userId, long chatRoomId, ChatRoomCloseReason reason) {
         User sender = userRepository.findByIdOrThrow(userId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
-        verifyParticipant(chatRoom, sender);
+        ChatRoomParticipantHelper.verifyParticipant(chatRoom, sender);
 
-        User receiver = resolveReceiver(chatRoom, sender);
+        User receiver = ChatRoomParticipantHelper.resolveReceiver(chatRoom, sender);
         if (chatRoom.getStatus() != ChatRoomStatus.OPEN)
             throw new BadRequestException("이미 닫힌 채팅방입니다.", chatRoomId + " is already closed.");
 
@@ -239,7 +189,7 @@ public class ChatRoomService {
         // 사물함에 있는 물건은 handleRetrieval에서 RETURNED 처리 (여기서 조기 변경 금지)
         if (reason == ChatRoomCloseReason.RETURNED && chatRoom.getItem() != null
                 && chatRoom.getItem().getStatus() != ItemStatus.IN_LOCKER) {
-            chatRoom.getItem().setStatus(ItemStatus.RETURNED);
+            itemService.markItemAsReturned(chatRoom.getItem().getId());
         }
 
         SendNotificationCommand command = new SendNotificationCommand(
@@ -256,9 +206,9 @@ public class ChatRoomService {
     public void reopenChatRoom(long userId, long chatRoomId) {
         User sender = userRepository.findByIdOrThrow(userId);
         ChatRoom chatRoom = chatRoomRepository.findByIdOrThrow(chatRoomId);
-        verifyParticipant(chatRoom, sender);
+        ChatRoomParticipantHelper.verifyParticipant(chatRoom, sender);
 
-        User receiver = resolveReceiver(chatRoom, sender);
+        User receiver = ChatRoomParticipantHelper.resolveReceiver(chatRoom, sender);
         if (chatRoom.getStatus() == ChatRoomStatus.OPEN)
             throw new BadRequestException("이미 열린 채팅방입니다.", chatRoomId + " is already opened.");
 

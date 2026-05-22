@@ -36,6 +36,7 @@ public class Item {
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(nullable = false, columnDefinition = "item_status")
+    @Setter(AccessLevel.NONE)
     @Builder.Default
     private ItemStatus status = ItemStatus.REPORTED;
 
@@ -80,6 +81,23 @@ public class Item {
     @Column(name = "updated_at")
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    /**
+     * @param status 바꿀 상태
+     * @see com.zoopick.server.service.ItemService#markItemAsReturned(long)
+     */
+    public void changeStatus(ItemStatus status) {
+        this.status = status;
+        if (status == ItemStatus.RETURNED)
+            this.returnedAt = LocalDateTime.now();
+    }
+
+    public String getDisplayName() {
+        if (category == null)
+            return "";
+        return category.getDisplayName();
+    }
+
 
     public void theftSuspected(LocalDateTime suspectedAt) {
         this.theftSuspectedAt = suspectedAt;
