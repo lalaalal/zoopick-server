@@ -3,6 +3,7 @@ package com.zoopick.server.auth.controller;
 import com.zoopick.server.auth.dto.*;
 import com.zoopick.server.auth.service.AuthService;
 import com.zoopick.server.dto.CommonResponse;
+import com.zoopick.server.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -90,10 +92,10 @@ public class AuthController {
     })
     @PostMapping("/logout")
     public ResponseEntity<CommonResponse<String>> logout(
-            HttpServletRequest request
+            @AuthenticationPrincipal UserPrincipal principal, HttpServletRequest request
     ) {
         String accessToken = request.getAttribute("accessToken").toString();
-        authService.logout(accessToken);
+        authService.logout(principal.id(), accessToken);
         return ResponseEntity.ok(CommonResponse.success("로그아웃이 완료되었습니다."));
     }
 }

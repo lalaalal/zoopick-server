@@ -153,10 +153,13 @@ public class AuthService {
         return certificationNumber.toString();
     }
 
-    public void logout(String accessToken) {
+    @Transactional
+    public void logout(long userId, String accessToken) {
         if (!tokenValidationService.validateTokenOrThrow(accessToken))
             throw new AccessTokenException(accessToken + " is expired or invalidated.");
 
         tokenValidationService.invalidateToken(accessToken);
+        User user = userRepository.findByIdOrThrow(userId);
+        user.setFcmToken(null);
     }
 }
