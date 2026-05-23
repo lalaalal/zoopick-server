@@ -114,7 +114,7 @@ public class LockerService {
 
         locker.setStatus(LockerStatus.EMPTY);
         locker.setCurrentItem(null);
-        itemService.markItemAsReturned(stored.getId());
+        itemService.changeItemStatus(stored.getId(), ItemStatus.RETURNED);
 
         log.info("[RETRIEVE] locker_id={} item_id={} user_id={} 회수 요청",
                 locker.getId(), stored.getId(), userId);
