@@ -92,7 +92,7 @@ public class LockerService {
 
         locker.setStatus(LockerStatus.IN_USE);
         locker.setCurrentItem(item);
-        item.changeStatus(ItemStatus.IN_LOCKER);
+        itemService.changeItemStatus(item.getId(), ItemStatus.IN_LOCKER);
 
         log.info("[STORE] locker_id={} item_id={} user_id={} 보관 요청",
                 locker.getId(), itemId, userId);
