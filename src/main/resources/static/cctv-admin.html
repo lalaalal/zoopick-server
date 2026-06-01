@@ -1039,12 +1039,7 @@
   </div>
 
   <script>
-    let BASE = normalizeBaseUrl($
-    {
-      ZOOPICK_BASE_URL
-    }
-    )
-
+    let BASE = normalizeBaseUrl(${ZOOPICK_BASE_URL});
 
     function normalizeBaseUrl(url) {
       return (url || '').replace(/\/+$/, '');
