@@ -25,7 +25,7 @@ public class ChatRoomMapper {
                 .itemId(resolveItemId(chatRoom.getItem()))
                 .itemStatus(resolveItemStatus(chatRoom.getItem()))
                 .unreadCount(unreadCount)
-                .updateTime(messageOptional.map(ChatMessage::getSentAt).orElse(null))
+                .updateTime(messageOptional.map(ChatMessage::getSentAt).orElse(chatRoom.getCreatedAt()))
                 .lastMessage(messageOptional.map(ChatMessage::getContent).orElse(""))
                 .build();
     }

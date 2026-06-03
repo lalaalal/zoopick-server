@@ -133,7 +133,12 @@ public class ChatRoomService {
         long unreadCount = messages.stream()
                 .filter(message -> message.getSender().getId().equals(counterpart.getId()) && message.getReadAt() == null)
                 .count();
-        ChatRoomRecord chatRoomRecord = chatRoomMapper.toChatRoomRecord(chatRoom, messages.get(messages.size() - 1), unreadCount);
+
+        ChatMessage message = null;
+        if (!messages.isEmpty()) {
+            message = messages.get(messages.size() - 1);
+        }
+        ChatRoomRecord chatRoomRecord = chatRoomMapper.toChatRoomRecord(chatRoom, message, unreadCount);
         return new ListMessagesResult(chatRoomRecord, messageRecords);
     }
 
