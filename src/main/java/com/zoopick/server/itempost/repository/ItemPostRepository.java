@@ -21,7 +21,7 @@ public interface ItemPostRepository extends JpaRepository<ItemPost, Long>, JpaSp
         return (root, query, criteriaBuilder) -> {
             Join<Object, Object> itemJoin = root.join("item");
             if (status == null)
-                return criteriaBuilder.not(itemJoin.get("status").equalTo(ItemStatus.RETURNED));
+                return criteriaBuilder.and(itemJoin.get("status").notEqualTo(ItemStatus.RETURNED), itemJoin.get("status").notEqualTo(ItemStatus.MATCHED));
             return criteriaBuilder.equal(itemJoin.get("status"), status);
         };
     }
